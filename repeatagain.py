@@ -4,7 +4,7 @@ import os
 import librosa  # to extract speech features
 import numpy as np
 import soundfile  # to read audio file
-from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score  # to measure how good we are
 from sklearn.model_selection import train_test_split  # for splitting training and testing
 
@@ -107,12 +107,9 @@ print("[+] Number of features:", X_train.shape[1])
 
 print("[*] Training the model...")
 
-
-clf = svm.SVC(kernel='poly', degree=2)  # Linear,rbf,sigmoid,poly
+clf = RandomForestClassifier(random_state=3)  # Linear,rbf,sigmoid,poly
 clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
 
 print("Accuracy: {:.2f}%".format(accuracy * 100))
-
-
