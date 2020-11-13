@@ -4,9 +4,8 @@ import os
 import librosa  # to extract speech features
 import numpy as np
 import soundfile  # to read audio file
-from sklearn.metrics import accuracy_score  # to measure how good we are
 from sklearn.model_selection import train_test_split  # for splitting training and testing
-from sklearn.neural_network import MLPClassifier  # multi-layer perceptron model
+from sklearn.neighbors import KNeighborsClassifier  # multi-layer perceptron model
 
 
 def extract_feature(file_name, **kwargs):
@@ -87,10 +86,11 @@ def load_data(test_size):
         features = extract_feature(file, mfcc=True, chroma=True, mel=True)
         # add to data
         X.append(features)  # will be given as input for both testing and training
-        y.append(emotion)  #will be given as training and testing output
+        y.append(emotion)  # will be given as training and testing output
     # split the data to training and testing and return it
     return train_test_split(np.array(X), y, test_size=test_size, random_state=7)
-    #random state is used to ensure the similarity of training and testing data in each execution
+    # random state is used to ensure the similarity of training and testing data in each execution
+
 
 # load RAVDESS dataset, 75% training 25% testing
 X_train, X_test, y_train, y_test = load_data(0.25)
@@ -103,27 +103,26 @@ print("[+] Number of testing samples:", X_test.shape[0])
 # this is a vector of features extracted
 # using extract_features() function
 print("[+] Number of features:", X_train.shape[1])
-# best model, determined by a grid search from hyperparameter space to obtain a optimal performance
-model_parameter = {
-    'alpha': 0.01,
-    'batch_size': 256,
-    'epsilon': 1e-08,
-    'hidden_layer_sizes': (300,),
-    'learning_rate': 'adaptive',
-    'max_iter': 500,
-}
-# initialize Multi Layer Perceptron classifier
-# with best parameters ( determined so far )
-model = MLPClassifier(**model_parameter)
-# train the model
+
 print("[*] Training the model...")
-model.fit(X_train, y_train)
-# predict 25% of data to measure how good we are
-y_pred = model.predict(X_test)
+from sklearn import metrics
 
-# calculate the accuracy
-accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
+k_range = range(1, 26)
+scores = {}
+scores_list = []
 
-print("Accuracy: {:.2f}%".format(accuracy * 100))
-# now we save the model
-# make result directory if doesn't exist yet
+for k in k_range:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    # training the model
+    knn.fit(X_train, y_train)
+    # predict the data to measure how good we are
+    y_pred = knn.predict(X_test)
+    # calculating the accuracy
+    scores[k] = metrics.accuracy_score(y_test, y_pred)
+    scores_list.append(metrics.accuracy_score(y_test, y_pred))
+
+import matplotlib.pyplot as plt
+
+plt.plot(k_range, scores_list)
+plt.xlabel('value of k for KNN')
+plt.ylabel('Accuracy')

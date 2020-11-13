@@ -46,7 +46,7 @@ observed_emotions = ['calm', 'happy', 'fearful', 'disgust']
 
 
 # Load the data and extract features for each sound file
-def load_data(test_size):
+def load_data(test_size=0.2):
     x, y = [], []
     for file in glob.glob("C:\\Users\\admin\\Desktop\\speech test cases\\Actor_*\\*.wav"):
         file_name = os.path.basename(file)
@@ -56,7 +56,7 @@ def load_data(test_size):
     feature = extract_feature(file, mfcc=True, chroma=True, mel=True)
     x.append(feature)
     y.append(emotion)
-    return train_test_split(np.array(x), y, test_size=test_size, random_state=9)
+    return train_test_split(np.array(x), y, test_size=test_size, random_state=7)
 
 
 # Split the dataset
