@@ -4,9 +4,16 @@ import os
 import librosa  # to extract speech features
 import numpy as np
 import soundfile  # to read audio file
-from sklearn.metrics import accuracy_score  # to measure how good we are
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix  # to measure how good we are
 from sklearn.model_selection import train_test_split  # for splitting training and testing
 from sklearn.neural_network import MLPClassifier  # multi-layer perceptron model
+
+"""
+conda install -c numba numba
+
+conda install -c conda-forge librosa
+"""
+
 
 
 def extract_feature(file_name, **kwargs):
@@ -125,5 +132,13 @@ y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
 
 print("Accuracy: {:.2f}%".format(accuracy * 100))
+
+output = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix.....")
+print(output)
+
+output1 = classification_report(y_test, y_pred)
+print("Classification Report.....")
+print(output1)
 # now we save the model
 # make result directory if doesn't exist yet

@@ -4,7 +4,7 @@ import os
 import librosa  # to extract speech features
 import numpy as np
 import soundfile  # to read audio file
-from sklearn.ensemble import RandomForestClassifier
+from sklearn import linear_model
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix  # to measure how good we are
 from sklearn.model_selection import train_test_split  # for splitting training and testing
 
@@ -107,9 +107,9 @@ print("[+] Number of features:", X_train.shape[1])
 
 print("[*] Training the model...")
 
-rfc = RandomForestClassifier(random_state=3)  # Linear,rbf,sigmoid,poly
-rfc.fit(X_train, y_train)
-y_pred = rfc.predict(X_test)
+llg = linear_model.LogisticRegression(solver='sag', max_iter=50)  # solver=lbfgs,"'newton-cg', 'sag','liblinear'
+llg.fit(X_train, y_train)
+y_pred = llg.predict(X_test)
 accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
 
 print("Accuracy: {:.2f}%".format(accuracy * 100))
