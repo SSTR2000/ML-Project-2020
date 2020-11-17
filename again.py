@@ -4,6 +4,7 @@ import os
 import librosa  # to extract speech features
 import numpy as np
 import soundfile  # to read audio file
+from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix  # to measure how good we are
 from sklearn.model_selection import train_test_split  # for splitting training and testing
 from sklearn.neural_network import MLPClassifier  # multi-layer perceptron model
@@ -113,7 +114,7 @@ print("[+] Number of features:", X_train.shape[1])
 # best model, determined by a grid search from hyperparameter space to obtain a optimal performance
 model_parameter = {
     'alpha': 0.01,
-    'batch_size': 256,
+    'batch_size': 100,
     'epsilon': 1e-08,
     'hidden_layer_sizes': (300,),
     'learning_rate': 'adaptive',
@@ -121,12 +122,41 @@ model_parameter = {
 }
 # initialize Multi Layer Perceptron classifier
 # with best parameters ( determined so far )
+"""
+n_range=range(27,50)
+scores={}
+scores_list=[]
+
+for n in n_range:
+    pca=PCA(n_components=n)
+    X_train_1=pca.fit_transform(X_train)
+    X_test_1=pca.transform(X_test)
+    model = MLPClassifier(**model_parameter)
+    # train the model
+    model.fit(X_train_1, y_train)
+    # predict 25% of data to measure how good we are
+    y_pred = model.predict(X_test_1)
+    #calculating the accuracy
+    scores[n]=metrics.accuracy_score(y_test,y_pred)
+    scores_list.append(metrics.accuracy_score(y_test,y_pred))
+
+plt.plot(n_range,scores_list)
+plt.xlabel('value of n for PCA')
+plt.ylabel('Accuracy')
+plt.show()
+"""
+pca = PCA(n_components=37)
+X_train_1 = pca.fit_transform(X_train)
+X_test_1 = pca.transform(X_test)
+
+print("Features left in tarining set after applying PCA", X_train_1.shape[1])
+
 model = MLPClassifier(**model_parameter)
 # train the model
 print("[*] Training the model...")
-model.fit(X_train, y_train)
+model.fit(X_train_1, y_train)
 # predict 25% of data to measure how good we are
-y_pred = model.predict(X_test)
+y_pred = model.predict(X_test_1)
 
 # calculate the accuracy
 accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)

@@ -4,7 +4,9 @@ import os
 import librosa  # to extract speech features
 import numpy as np
 import soundfile  # to read audio file
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix  # to measure how good we are
+from matplotlib import pyplot as plt
+from sklearn import metrics
+from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split  # for splitting training and testing
 from sklearn.neighbors import KNeighborsClassifier  # multi-layer perceptron model
 
@@ -107,6 +109,7 @@ print("[+] Number of features:", X_train.shape[1])
 
 print("[*] Training the model...")
 
+
 """k_range=range(1,26)
 scores={}
 scores_list=[]
@@ -121,16 +124,22 @@ for k in k_range:
     scores[k]=metrics.accuracy_score(y_test,y_pred)
     scores_list.append(metrics.accuracy_score(y_test,y_pred))
 
-
-
 plt.plot(k_range,scores_list)
 plt.xlabel('value of k for KNN')
 plt.ylabel('Accuracy')
 plt.show()
+
 """
-knn = KNeighborsClassifier(n_neighbors=7)
-knn.fit(X_train, y_train)
-y_pred = knn.predict(X_test)
+"""
+pca=PCA(n_components=160)
+X_train_1=pca.fit_transform(X_train)
+X_test_1=pca.transform(X_test)
+
+print("Features left after applying PCA",X_train_1.shape[1])
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train_1, y_train)
+y_pred = knn.predict(X_test_1)
 accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
 
 print("Accuracy: {:.2f}%".format(accuracy * 100))
@@ -142,3 +151,23 @@ print(output)
 output1 = classification_report(y_test, y_pred)
 print("Classification Report.....")
 print(output1)
+"""
+n_range = range(1, 100)
+scores = {}
+scores_list = []
+
+for n in n_range:
+    pca = PCA(n_components=n)
+    X_train_1 = pca.fit_transform(X_train)
+    X_test_1 = pca.transform(X_test)
+    knn = KNeighborsClassifier(n_neighbors=5)
+    knn.fit(X_train_1, y_train)
+    y_pred = knn.predict(X_test_1)
+    # calculating the accuracy
+    scores[n] = metrics.accuracy_score(y_test, y_pred)
+    scores_list.append(metrics.accuracy_score(y_test, y_pred))
+
+plt.plot(n_range, scores_list)
+plt.xlabel('value of n for PCA')
+plt.ylabel('Accuracy')
+plt.show()
