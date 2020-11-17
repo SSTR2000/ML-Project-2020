@@ -9,6 +9,8 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import train_test_split  # for splitting training and testing
 from sklearn.neural_network import MLPClassifier  # multi-layer perceptron model
 
+# from matplotlib import pyplot as plt
+# from sklearn import metrics
 """
 conda install -c numba numba
 

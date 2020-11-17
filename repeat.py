@@ -4,9 +4,10 @@ import os
 import librosa  # to extract speech features
 import numpy as np
 import soundfile  # to read audio file
-from matplotlib import pyplot as plt
-from sklearn import metrics
+# from matplotlib import pyplot as plt
+# from sklearn import metrics
 from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split  # for splitting training and testing
 from sklearn.neighbors import KNeighborsClassifier  # multi-layer perceptron model
 
@@ -130,14 +131,14 @@ plt.ylabel('Accuracy')
 plt.show()
 
 """
-"""
-pca=PCA(n_components=160)
+
+pca = PCA(n_components=100)
 X_train_1=pca.fit_transform(X_train)
 X_test_1=pca.transform(X_test)
 
 print("Features left after applying PCA",X_train_1.shape[1])
 
-knn = KNeighborsClassifier(n_neighbors=5)
+knn = KNeighborsClassifier(n_neighbors=3)
 knn.fit(X_train_1, y_train)
 y_pred = knn.predict(X_test_1)
 accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
@@ -152,7 +153,7 @@ output1 = classification_report(y_test, y_pred)
 print("Classification Report.....")
 print(output1)
 """
-n_range = range(1, 100)
+n_range = range( 1,50)
 scores = {}
 scores_list = []
 
@@ -160,7 +161,7 @@ for n in n_range:
     pca = PCA(n_components=n)
     X_train_1 = pca.fit_transform(X_train)
     X_test_1 = pca.transform(X_test)
-    knn = KNeighborsClassifier(n_neighbors=5)
+    knn = KNeighborsClassifier(n_neighbors=1)
     knn.fit(X_train_1, y_train)
     y_pred = knn.predict(X_test_1)
     # calculating the accuracy
@@ -171,3 +172,4 @@ plt.plot(n_range, scores_list)
 plt.xlabel('value of n for PCA')
 plt.ylabel('Accuracy')
 plt.show()
+"""
