@@ -114,16 +114,16 @@ print("[+] Number of testing samples:", X_test.shape[0])
 # using extract_features() function
 print("[+] Number of features:", X_train.shape[1])
 # best model, determined by a grid search from hyperparameter space to obtain a optimal performance
-model_parameter = {
-    'alpha': 0.01,
-    'batch_size': 100,
-    'epsilon': 1e-08,
-    'hidden_layer_sizes': (300,),
-    'learning_rate': 'adaptive',
-    'max_iter': 500,
-}
-# initialize Multi Layer Perceptron classifier
-# with best parameters ( determined so far )
+print("Shape of training data before applying PCA", X_train.shape)
+print("Shape of testing data before applying PCA", X_test.shape)
+
+from sklearn.preprocessing import StandardScaler
+
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+
 """
 n_range=range(27,50)
 scores={}
@@ -147,11 +147,23 @@ plt.xlabel('value of n for PCA')
 plt.ylabel('Accuracy')
 plt.show()
 """
-pca = PCA(n_components=37)
+pca = PCA(n_components=2)
 X_train_1 = pca.fit_transform(X_train)
 X_test_1 = pca.transform(X_test)
 
-print("Features left in tarining set after applying PCA", X_train_1.shape[1])
+print("Shape of training data before applying PCA", X_train_1.shape)
+print("Shape of testing data before applying PCA", X_test_1.shape)
+
+model_parameter = {
+    'alpha': 0.01,
+    'batch_size': 100,
+    'epsilon': 1e-08,
+    'hidden_layer_sizes': (300,),
+    'learning_rate': 'adaptive',
+    'max_iter': 500,
+}
+# initialize Multi Layer Perceptron classifier
+# with best parameters ( determined so far )
 
 model = MLPClassifier(**model_parameter)
 # train the model
