@@ -1,118 +1,91 @@
-import glob
-import os
+import glob as glb
+import os as OS
 
-import librosa  # to extract speech features
-import numpy as np
-import soundfile  # to read audio file
-from sklearn.model_selection import train_test_split  # for splitting training and testing
+import librosa as libs
+import numpy as num
+import soundfile as snd
+from sklearn.model_selection import train_test_split
 
+
+# from sklearn import svm
 
 # from matplotlib import pyplot as plt
 # from sklearn import metrics
 # from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-def extract_feature(file_name, **kwargs):
-    """
-    Extract feature from audio file `file_name`
-        Features supported:
-            - MFCC (mfcc)
-            - Chroma (chroma)
-            - MEL Spectrogram Frequency (mel)
-            - Contrast (contrast)
-            - Tonnetz (tonnetz)
-        e.g:
-        `features = extract_feature(path, mel=True, mfcc=True)`
-    """
-    mfcc = kwargs.get("mfcc")
-    chroma = kwargs.get("chroma")
-    mel = kwargs.get("mel")
-    contrast = kwargs.get("contrast")
-    tonnetz = kwargs.get("tonnetz")
-    # to read audio file
-    with soundfile.SoundFile(file_name) as sound_file:
-        X = sound_file.read(dtype="float32")
-        sample_rate = sound_file.samplerate
-        if chroma or contrast:
-            stft = np.abs(librosa.stft(X))
-        result = np.array([])
-        if mfcc:
-            mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T, axis=0)
-            result = np.hstack((result, mfccs))
-        if chroma:
-            chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T, axis=0)
-            result = np.hstack((result, chroma))
-        if mel:
-            mel = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T, axis=0)
-            result = np.hstack((result, mel))
-        if contrast:
-            contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T, axis=0)
-            result = np.hstack((result, contrast))
-        if tonnetz:
-            tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sample_rate).T, axis=0)
-            result = np.hstack((result, tonnetz))
-    return result
+def remove_features(file, **multiargs):
+    feature_mfcc = multiargs.get("mfcc")
+    feature_chroma = multiargs.get("chroma")
+    feature_mel = multiargs.get("mel")
+    feature_contrast = multiargs.get("contrast")
+    feature_tonnetz = multiargs.get("tonnetz")
+
+    with snd.SoundFile(file) as snd_filename:
+        X = snd_filename.read(dtype="float32")
+        smp = snd_filename.samplerate
+        if feature_chroma or feature_contrast:
+            sig_time_freq = num.abs(libs.stft(X))
+        outcome = num.array([])
+        if feature_mfcc:
+            mfccs = num.mean(libs.feature.mfcc(y=X, sr=smp, n_mfcc=40).T, axis=0)
+            outcome = num.hstack((outcome, mfccs))
+        if feature_chroma:
+            chroma = num.mean(libs.feature.chroma_stft(S=sig_time_freq, sr=smp).T, axis=0)
+            outcome = num.hstack((outcome, chroma))
+        if feature_mel:
+            mel = num.mean(libs.feature.melspectrogram(X, sr=smp).T, axis=0)
+            outcome = num.hstack((outcome, mel))
+        if feature_contrast:
+            contrast = num.mean(libs.feature.spectral_contrast(S=sig_time_freq, sr=smp).T, axis=0)
+            outcome = num.hstack((outcome, contrast))
+        if feature_tonnetz:
+            tonnetz = num.mean(libs.feature.tonnetz(y=libs.effects.harmonic(X), sr=smp).T, axis=0)
+            outcome = num.hstack((outcome, tonnetz))
+    return outcome
 
 
-# all emotions on RAVDESS dataset
-int2emotion = {
-    "01": "neutral",
-    "02": "calm",
-    "03": "happy",
-    "04": "sad",
-    "05": "angry",
-    "06": "fearful",
-    "07": "disgust",
-    "08": "surprised"
-}
+available_emotions = {"01": "neutral_emotion", "02": "calm_emotion", "03": "happy_emotion", "04": "sad_emotion",
+                      "05": "angry_emotion", "06": "fearful_emotion", "07": "disgust_emotion",
+                      "08": "surprised_emotion"}
 
-# we allow only these emotions ( feel free to tune this on your need )
-AVAILABLE_EMOTIONS = {
-    "angry",
-    "sad",
-    "neutral",
-    "happy"
-}
+Considered_emotion = {"angry_emotion", "sad_emotion", "neutral_emotion", "happy_emotion"}
 
 
-def load_data(test_size):
-    X, y = [], []
-    c = 0
-    for file in glob.glob("C:\\Users\\admin\\Desktop\\speech test cases\\Actor_*\\*.wav"):
-        # get the base name of the audio file through os path
-        basename = os.path.basename(file)
-        # get the emotion label
-        emotion = int2emotion[basename.split("-")[2]]
-        # we allow only AVAILABLE_EMOTIONS we set
-        if emotion not in AVAILABLE_EMOTIONS:
+def importing_dataset(test_size):
+    X_feature, y_emotion = [], []
+    for file in glb.glob("C:\\Users\\admin\\Desktop\\speech test cases\\Actor_*\\*.wav"):
+
+        name = OS.path.basename(file)
+
+        emotion_found = available_emotions[name.split("-")[2]]
+
+        if emotion_found not in Considered_emotion:
             continue
-        # extract speech features
-        features = extract_feature(file, mfcc=True, chroma=True, mel=True)
-        # add to data
-        X.append(features)  # will be given as input for both testing and training
-        y.append(emotion)  # will be given as training and testing output
-    # split the data to training and testing and return it
-    return train_test_split(np.array(X), y, test_size=test_size, random_state=7)
-    # random state is used to ensure the similarity of training and testing data in each execution
+
+        feature_obtained = remove_features(file, mfcc=True, chroma=True, mel=True)
+
+        X_feature.append(feature_obtained)
+        y_emotion.append(emotion_found)
+
+    return train_test_split(num.array(X_feature), y_emotion, test_size=test_size, random_state=7)
 
 
-# load RAVDESS dataset, 75% training 25% testing
-X_train, X_test, y_train, y_test = load_data(0.25)
-# print some details
-# number of samples in training data
-print("[+] Number of training samples:", X_train.shape[0])
-# number of samples in testing data
-print("[+] Number of testing samples:", X_test.shape[0])
-# number of features used
-# this is a vector of features extracted
-# using extract_features() function
-print("[+] Number of features:", X_train.shape[1])
+X_train_features, X_test_features, y_train_emotion, y_test_emotion = importing_dataset(0.25)
+
+print("[+] Number of training samples:", X_train_features.shape[0])
+
+print("[+] Number of testing samples:", X_test_features.shape[0])
+
+print("[+] Number of features:", X_train_features.shape[1])
+
+print("Shape of training data before applying PCA", X_train_features.shape)
+print("Shape of testing data before applying PCA", X_test_features.shape)
 
 from sklearn.preprocessing import StandardScaler
 
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
-
+SS = StandardScaler()
+X_train_features = SS.fit_transform(X_train_features)
+X_test_features = SS.transform(X_test_features)
 print("[*] Training the model...")
 """
 n_range=range(1,26)
@@ -120,41 +93,43 @@ scores={}
 scores_list=[]
 
 for n in n_range:
-    pca=PCA(n_components=n)
-    X_train_1=pca.fit_transform(X_train)
-    X_test_1=pca.transform(X_test)
-    clf = svm.SVC(kernel='rbf')  # Linear,rbf,sigmoid,kernel='poly', degree=2
-    clf.fit(X_train_1, y_train)
-    y_pred = clf.predict(X_test_1)
+    PC = PCA(n_components=n)
+    X_train_1 = PC.fit_transform(X_train_features)
+    X_test_1 = PC.transform(X_test_features)
 
+    SVM = svm.SVC(kernel='rbf')  #Linear,rbf,sigmoid,kernel='poly', degree=2
+    SVM.fit(X_train_1, y_train_emotion)
+    y_prediction = SVM.predict(X_test_1)
     #calculating the accuracy
-    scores[n]=metrics.accuracy_score(y_test,y_pred)
-    scores_list.append(metrics.accuracy_score(y_test,y_pred))
+    scores[n]=metrics.accuracy_score(y_test_emotion,y_prediction)
+    scores_list.append(metrics.accuracy_score(y_test_emotion,y_prediction))
 
 plt.plot(n_range,scores_list)
 plt.xlabel('value of n for PCA')
 plt.ylabel('Accuracy')
 plt.show()
+
 """
+"""
+PC = PCA(n_components=2)
+X_train_1 = PC.fit_transform(X_train_features)
+X_test_1 = PC.transform(X_test_features)
 
-"""pca=PCA(n_components=35)
-X_train_1=pca.fit_transform(X_train)
-X_test_1=pca.transform(X_test)
+print("Shape of training data before applying PCA", X_train_1.shape)
+print("Shape of testing data before applying PCA", X_test_1.shape)
 
-print("Features left after applying PCA",X_train_1.shape[1])
-
-clf = svm.SVC(kernel='rbf')  #Linear,rbf,sigmoid,kernel='poly', degree=2
-clf.fit(X_train_1, y_train)
-y_pred = clf.predict(X_test_1)
-accuracy = accuracy_score(y_true=y_test, y_pred=y_pred)
+SVM = svm.SVC(kernel='rbf')  #Linear,rbf,sigmoid,kernel='poly', degree=2
+SVM.fit(X_train_1, y_train_emotion)
+y_prediction = SVM.predict(X_test_1)
+accuracy = accuracy_score(y_true=y_test_emotion, y_pred=y_prediction)
 
 print("Accuracy: {:.2f}%".format(accuracy * 100))
 
-output = confusion_matrix(y_test, y_pred)
+output = confusion_matrix(y_test_emotion, y_prediction)
 print("Confusion Matrix.....")
 print(output)
 
-output1 = classification_report(y_test, y_pred,labels=np.unique(y_pred))
+output1 = classification_report(y_test_emotion, y_prediction)
 print("Classification Report.....")
 print(output1)
 """

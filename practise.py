@@ -4,15 +4,18 @@ import os as OS
 import librosa as libs
 import numpy as num
 import soundfile as snd
+from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
-
-
-# from sklearn.ensemble import RandomForestClassifier as rfc
-
+from sklearn.neural_network import MLPClassifier as mlp
 
 # from matplotlib import pyplot as plt
 # from sklearn import metrics
-# from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+"""
+conda install -c numba numba
+
+conda install -c conda-forge librosa
+"""
 
 
 def remove_features(file, **multiargs):
@@ -89,43 +92,54 @@ SS = StandardScaler()
 X_train_features = SS.fit_transform(X_train_features)
 X_test_features = SS.transform(X_test_features)
 
-
-print("[*] Training the model...")
 """
-n_range=range(1,26)
+n_range=range(27,50)
 scores={}
 scores_list=[]
 
 for n in n_range:
-    PC = PCA(n_components=n)
-    X_train_1 = PC.fit_transform(X_train_features)
-    X_test_1 = PC.transform(X_test_features)
-    RFC = rfc(random_state=5)
-    RFC.fit(X_train_1, y_train_emotion)
-    y_prediction = RFC.predict(X_test_1)
-
+    pca=PCA(n_components=n)
+    X_train_1=pca.fit_transform(X_train)
+    X_test_1=pca.transform(X_test)
+    model = MLPClassifier(**model_parameter)
+    # train the model
+    model.fit(X_train_1, y_train)
+    # predict 25% of data to measure how good we are
+    y_pred = model.predict(X_test_1)
     #calculating the accuracy
-    scores[n]=metrics.accuracy_score(y_test_emotion,y_prediction)
-    scores_list.append(metrics.accuracy_score(y_test_emotion,y_prediction))
+    scores[n]=metrics.accuracy_score(y_test,y_pred)
+    scores_list.append(metrics.accuracy_score(y_test,y_pred))
 
 plt.plot(n_range,scores_list)
 plt.xlabel('value of n for PCA')
 plt.ylabel('Accuracy')
 plt.show()
 """
-"""
 PC = PCA(n_components=2)
 X_train_1 = PC.fit_transform(X_train_features)
 X_test_1 = PC.transform(X_test_features)
+
 print("Shape of training data before applying PCA", X_train_1.shape)
 print("Shape of testing data before applying PCA", X_test_1.shape)
 
-RFC = rfc(random_state=5)
-RFC.fit(X_train_1, y_train_emotion)
-y_prediction = RFC.predict(X_test_1)
+Parameter = {
+    'alpha': 0.01,
+    'batch_size': 100,
+    'epsilon': 1e-08,
+    'hidden_layer_sizes': (300,),
+    'learning_rate': 'adaptive',
+    'max_iter': 500,
+}
+
+MLP = mlp(**Parameter)
+
+MLP.fit(X_train_1, y_train_emotion)
+
+y_prediction = MLP.predict(X_test_1)
+
 accuracy = accuracy_score(y_true=y_test_emotion, y_pred=y_prediction)
 
-print("Accuracy: {:.2f}%".format(accuracy * 100))
+print("Accuracy obtained: {:.2f}%".format(accuracy * 100))
 
 output = confusion_matrix(y_test_emotion, y_prediction)
 print("Confusion Matrix.....")
@@ -134,4 +148,3 @@ print(output)
 output1 = classification_report(y_test_emotion, y_prediction)
 print("Classification Report.....")
 print(output1)
-"""
