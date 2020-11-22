@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 
 # from sklearn.ensemble import RandomForestClassifier as rfc
-
+# from sklearn.decomposition import PCA
 
 # from matplotlib import pyplot as plt
 # from sklearn import metrics
@@ -91,7 +91,11 @@ X_test_features = SS.transform(X_test_features)
 
 
 print("[*] Training the model...")
-"""
+
+PC = PCA()
+X_train_1 = PC.fit_transform(X_train_features)
+X_test_1 = PC.transform(X_test_features)
+
 n_range=range(1,26)
 scores={}
 scores_list=[]
@@ -113,8 +117,7 @@ plt.xlabel('value of n for PCA')
 plt.ylabel('Accuracy')
 plt.show()
 """
-"""
-PC = PCA(n_components=2)
+PC = PCA()
 X_train_1 = PC.fit_transform(X_train_features)
 X_test_1 = PC.transform(X_test_features)
 print("Shape of training data before applying PCA", X_train_1.shape)
@@ -123,9 +126,14 @@ print("Shape of testing data before applying PCA", X_test_1.shape)
 RFC = rfc(random_state=5)
 RFC.fit(X_train_1, y_train_emotion)
 y_prediction = RFC.predict(X_test_1)
+
+accuracy = accuracy_score(y_true=y_train_emotion,y_pred= RFC.predict(X_train_1))
+
+print("Accuracy obtained in training : {:.2f}%".format(accuracy * 100))
 accuracy = accuracy_score(y_true=y_test_emotion, y_pred=y_prediction)
 
-print("Accuracy: {:.2f}%".format(accuracy * 100))
+print("Accuracy obtained in testing : {:.2f}%".format(accuracy * 100))
+
 
 output = confusion_matrix(y_test_emotion, y_prediction)
 print("Confusion Matrix.....")

@@ -7,6 +7,8 @@ import soundfile as snd
 from sklearn.model_selection import train_test_split
 
 
+# from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+# from sklearn.decomposition import PCA
 # from matplotlib import pyplot as plt
 # from sklearn import metrics
 
@@ -85,7 +87,8 @@ from sklearn.preprocessing import StandardScaler
 SS = StandardScaler()
 X_train_features = SS.fit_transform(X_train_features)
 X_test_features = SS.transform(X_test_features)
-"""
+
+""""
 k_range=range(1,26)
 scores={}
 scores_list=[]
@@ -104,23 +107,24 @@ plt.plot(k_range,scores_list)
 plt.xlabel('value of k for KNN')
 plt.ylabel('Accuracy')
 plt.show()
-
 """
 """
-PC = PCA(n_components=2)
+PC = PCA()
 X_train_1 = PC.fit_transform(X_train_features)
 X_test_1 = PC.transform(X_test_features)
-
 print("Shape of training data before applying PCA", X_train_1.shape)
 print("Shape of testing data before applying PCA", X_test_1.shape)
 
-KNN = KNeighborsClassifier(n_neighbors=3)
+KNN = KNeighborsClassifier(n_neighbors=5)
 KNN.fit(X_train_1, y_train_emotion)
 y_prediction = KNN.predict(X_test_1)
+
+accuracy = accuracy_score(y_true=y_train_emotion,y_pred= KNN.predict(X_train_1))
+
+print("Accuracy obtained in training : {:.2f}%".format(accuracy * 100))
 accuracy = accuracy_score(y_true=y_test_emotion, y_pred=y_prediction)
 
-print("Accuracy: {:.2f}%".format(accuracy * 100))
-
+print("Accuracy obtained in testing : {:.2f}%".format(accuracy * 100))
 output = confusion_matrix(y_test_emotion, y_prediction)
 print("Confusion Matrix.....")
 print(output)

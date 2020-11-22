@@ -4,24 +4,24 @@ import os as OS
 import librosa as libs
 import numpy as num
 import soundfile as snd
-from sklearn.decomposition import PCA
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+f  # rom sklearn.decomposition import PCA
+# from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
 # from sklearn.neural_network import MLPClassifier as mlp
 
 # from matplotlib import pyplot as plt
-# from sklearn import metrics
+#from sklearn import metrics
 """
 conda install -c numba numba
 
 conda install -c conda-forge librosa
 """
-
-
+X1_features, y1_emotion = [],[]
 def remove_features(file, **multiargs):
     feature_mfcc = multiargs.get("mfcc")
-    feature_chroma = multiargs.get("chroma")
+    feature_chroma = multiargs.get("chroma")  #[a,b,c][[a],[b],[c]]
     feature_mel = multiargs.get("mel")
     feature_contrast = multiargs.get("contrast")
     feature_tonnetz = multiargs.get("tonnetz")
@@ -47,7 +47,7 @@ def remove_features(file, **multiargs):
         if feature_tonnetz:
             tonnetz = num.mean(libs.feature.tonnetz(y=libs.effects.harmonic(X), sr=smp).T, axis=0)
             outcome = num.hstack((outcome, tonnetz))
-    return outcome
+    return outcome,c
 
 
 available_emotions = {"01": "neutral_emotion", "02": "calm_emotion", "03": "happy_emotion", "04": "sad_emotion",
@@ -69,23 +69,28 @@ def importing_dataset(test_size):
             continue
 
         feature_obtained = remove_features(file, mfcc=True, chroma=True, mel=True)
-
         X_feature.append(feature_obtained)
+        X1_features.append(feature_obtained)
         y_emotion.append(emotion_found)
+        y1_emotion.append(emotion_found)
 
-    return train_test_split(num.array(X_feature), y_emotion, test_size=test_size, random_state=7)
+    return train_test_split(num.array(X_feature), y_emotion, test_size=test_size, random_state=5)
 
 
-X_train_features, X_test_features, y_train_emotion, y_test_emotion = importing_dataset(0.25)
+X_train_features, X_test_features, y_train_emotion, y_test_emotion = importing_dataset(0.20)
 
-print("[+] Number of training samples:", X_train_features.shape[0])
+print("[+] Number of training samples:", X_train_features.shape[0])  # samples,features
 
-print("[+] Number of testing samples:", X_test_features.shape[0])
+print("[+] Number of testing samples:", X_test_features.shape[0])  # samples,featurs
 
-print("[+] Number of features:", X_train_features.shape[1])
-
+print("[+] Number of features:", X_train_features.shape[1])  # features
+colors = ("red", "blue")
 print("Shape of training data before applying PCA", X_train_features.shape)
 print("Shape of testing data before applying PCA", X_test_features.shape)
+
+# plt.scatter(y1_emotion,X1_features[0][0],alpha=1,edgecolors='none')
+# plt.title('Features of emotion')
+#plt.show()
 
 from sklearn.preprocessing import StandardScaler
 
@@ -93,14 +98,22 @@ SS = StandardScaler()
 X_train_features = SS.fit_transform(X_train_features)
 X_test_features = SS.transform(X_test_features)
 
-
+Parameter = {
+    'alpha': 0.01,
+    'batch_size': 100,
+    'epsilon': 1e-08,
+    'hidden_layer_sizes': (300,),
+    'learning_rate': 'adaptive',
+    'max_iter': 500,
+}
 """
-n_range=range(27,50)
+
+n_range=range(1,50)
 scores={}
 scores_list=[]
 
 for n in n_range:
-    PC = PCA(n_components=2)
+    PC = PCA(n_components=n)
     X_train_1 = PC.fit_transform(X_train_features)
     X_test_1 = PC.transform(X_test_features)
 
@@ -119,31 +132,26 @@ plt.xlabel('value of n for PCA')
 plt.ylabel('Accuracy')
 plt.show()
 """
-PC = PCA(n_components=2)
+
+PC = PCA(180)
 X_train_1 = PC.fit_transform(X_train_features)
 X_test_1 = PC.transform(X_test_features)
 
 print("Shape of training data before applying PCA", X_train_1.shape)
 print("Shape of testing data before applying PCA", X_test_1.shape)
-
-Parameter = {
-    'alpha': 0.01,
-    'batch_size': 100,
-    'epsilon': 1e-08,
-    'hidden_layer_sizes': (300,),
-    'learning_rate': 'adaptive',
-    'max_iter': 500,
-}
-
 MLP = mlp(**Parameter)
 
 MLP.fit(X_train_1, y_train_emotion)
 
 y_prediction = MLP.predict(X_test_1)
 
+accuracy = accuracy_score(y_true=y_train_emotion, y_pred=MLP.predict(X_train_1))
+
+print("Accuracy obtained in training : {:.2f}%".format(accuracy * 100))
+
 accuracy = accuracy_score(y_true=y_test_emotion, y_pred=y_prediction)
 
-print("Accuracy obtained: {:.2f}%".format(accuracy * 100))
+print("Accuracy obtained testing: {:.2f}%".format(accuracy * 100))
 
 output = confusion_matrix(y_test_emotion, y_prediction)
 print("Confusion Matrix.....")

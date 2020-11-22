@@ -4,16 +4,18 @@ import os as OS
 import librosa as libs
 import numpy as num
 import soundfile as snd
+from sklearn import svm
+from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestClassifier as rfc
+from sklearn.ensemble import VotingClassifier as vc
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier as mlp
+
 
 # from matplotlib import pyplot as plt
 # from sklearn import metrics
-"""
-conda install -c numba numba
-
-conda install -c conda-forge librosa
-"""
-
 
 def remove_features(file, **multiargs):
     feature_mfcc = multiargs.get("mfcc")
@@ -74,7 +76,6 @@ def importing_dataset(test_size):
 
 X_train_features, X_test_features, y_train_emotion, y_test_emotion = importing_dataset(0.25)
 
-"""
 print("[+] Number of training samples:", X_train_features.shape[0])
 
 print("[+] Number of testing samples:", X_test_features.shape[0])
@@ -89,56 +90,64 @@ from sklearn.preprocessing import StandardScaler
 SS = StandardScaler()
 X_train_features = SS.fit_transform(X_train_features)
 X_test_features = SS.transform(X_test_features)
-"""
-"""
-n_range=range(27,50)
-scores={}
-scores_list=[]
-
-for n in n_range:
-    pca=PCA(n_components=n)
-    X_train_1=pca.fit_transform(X_train)
-    X_test_1=pca.transform(X_test)
-    model = MLPClassifier(**model_parameter)
-    # train the model
-    model.fit(X_train_1, y_train)
-    # predict 25% of data to measure how good we are
-    y_pred = model.predict(X_test_1)
-    #calculating the accuracy
-    scores[n]=metrics.accuracy_score(y_test,y_pred)
-    scores_list.append(metrics.accuracy_score(y_test,y_pred))
-
-plt.plot(n_range,scores_list)
-plt.xlabel('value of n for PCA')
-plt.ylabel('Accuracy')
-plt.show()
-"""
-"""
-PC = PCA(n_components=2)
-X_train_1 = PC.fit_transform(X_train_features)
-X_test_1 = PC.transform(X_test_features)
-
-print("Shape of training data before applying PCA", X_train_1.shape)
-print("Shape of testing data before applying PCA", X_test_1.shape)
-
+print("[*] Training the model...")
 Parameter = {
     'alpha': 0.01,
     'batch_size': 100,
     'epsilon': 1e-08,
     'hidden_layer_sizes': (300,),
     'learning_rate': 'adaptive',
-    'max_iter': 500,
+    'max_iter': 1000,
 }
+SVM = svm.SVC(kernel='rbf', probability=True)  # Linear,rbf,sigmoid,kernel='poly', degree=2
 
+KNN = KNeighborsClassifier(n_neighbors=5)
+
+RFC = rfc(random_state=5)
 MLP = mlp(**Parameter)
+"""
+n_range=range(150,180)
+scores={}
+scores_list=[]
 
-MLP.fit(X_train_1, y_train_emotion)
+for n in n_range:
+    PC = PCA(n_components=n)
+    X_train_1 = PC.fit_transform(X_train_features)
+    X_test_1 = PC.transform(X_test_features)
+    VC=vc(estimators=[('SVC',SVM),('kNearest',KNN),('MLP',MLP)],voting='soft')
+    VC.fit(X_train_1,y_train_emotion)
+    y_prediction = VC.predict(X_test_1)
+    #calculating the accuracy
+    scores[n]=metrics.accuracy_score(y_test_emotion,y_prediction)
+    scores_list.append(metrics.accuracy_score(y_test_emotion,y_prediction))
 
-y_prediction = MLP.predict(X_test_1)
+plt.plot(n_range,scores_list)
+plt.xlabel('value of n for PCA')
+plt.ylabel('Accuracy')
+plt.show()
 
+
+"""
+PC = PCA(n_components=152)
+X_train_1 = PC.fit_transform(X_train_features)
+X_test_1 = PC.transform(X_test_features)
+
+print("Shape of training data after applying PCA", X_train_1.shape)
+print("Shape of testing data after applying PCA", X_test_1.shape)
+
+# VC=vc(estimators=[('SVC',SVM),('kNearest',KNN),('Random',RFC)],voting='soft')--70.83%
+VC = vc(estimators=[('SVC', SVM), ('kNearest', KNN), ('MLP', MLP)], voting='soft')  # 84%
+# VC=vc(estimators=[('MLP',MLP),('kNearest',KNN),('Random',RFC)],voting='soft')--82%
+# VC=vc(estimators=[('SVC',SVM),('MLP',MLP),('Random',RFC)],voting='soft')--83%
+VC.fit(X_train_1, y_train_emotion)
+y_prediction = VC.predict(X_test_1)
+
+accuracy = accuracy_score(y_true=y_train_emotion, y_pred=VC.predict(X_train_1))
+
+print("Accuracy obtained in training : {:.2f}%".format(accuracy * 100))
 accuracy = accuracy_score(y_true=y_test_emotion, y_pred=y_prediction)
 
-print("Accuracy obtained: {:.2f}%".format(accuracy * 100))
+print("Accuracy obtained in testing : {:.2f}%".format(accuracy * 100))
 
 output = confusion_matrix(y_test_emotion, y_prediction)
 print("Confusion Matrix.....")
@@ -147,4 +156,3 @@ print(output)
 output1 = classification_report(y_test_emotion, y_prediction)
 print("Classification Report.....")
 print(output1)
-"""

@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 
 # from sklearn import svm
-
+# from sklearn.decomposition import PCA
 # from matplotlib import pyplot as plt
 # from sklearn import metrics
 # from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
@@ -87,8 +87,8 @@ SS = StandardScaler()
 X_train_features = SS.fit_transform(X_train_features)
 X_test_features = SS.transform(X_test_features)
 print("[*] Training the model...")
-"""
-n_range=range(1,26)
+
+n_range = range(1,50)
 scores={}
 scores_list=[]
 
@@ -110,8 +110,7 @@ plt.ylabel('Accuracy')
 plt.show()
 
 """
-"""
-PC = PCA(n_components=2)
+PC = PCA()
 X_train_1 = PC.fit_transform(X_train_features)
 X_test_1 = PC.transform(X_test_features)
 
@@ -121,9 +120,13 @@ print("Shape of testing data before applying PCA", X_test_1.shape)
 SVM = svm.SVC(kernel='rbf')  #Linear,rbf,sigmoid,kernel='poly', degree=2
 SVM.fit(X_train_1, y_train_emotion)
 y_prediction = SVM.predict(X_test_1)
+
+accuracy = accuracy_score(y_true=y_train_emotion,y_pred= SVM.predict(X_train_1))
+
+print("Accuracy obtained in training : {:.2f}%".format(accuracy * 100))
 accuracy = accuracy_score(y_true=y_test_emotion, y_pred=y_prediction)
 
-print("Accuracy: {:.2f}%".format(accuracy * 100))
+print("Accuracy obtained in testing : {:.2f}%".format(accuracy * 100))
 
 output = confusion_matrix(y_test_emotion, y_prediction)
 print("Confusion Matrix.....")
